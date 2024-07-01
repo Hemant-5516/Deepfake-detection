@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deepfake Image Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-image: url('/static/bg.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh; /* Set body height to full viewport height */
+            margin: 0; /* Remove default margin */
+        }
+        h1 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #file-input {
+            display: none;
+        }
+        #upload-btn {
+            background-color: #d6be07;
+            color: rgb(186, 29, 29);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #upload-btn:hover {
+            background-color: #45a049;
+        }
+        #uploaded-image {
+            max-width: 100%;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(247, 100, 1, 0.1);
+        }
+        #result {
+            margin-top: 2px;
+            font-size: 18px;
+            color: #6e1628;
+            font-weight: bold;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 50px;
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+        .navbar h1 {
+            color: #00fff7;
+            margin: 0;
+        }
+        .result-box {
+            display: inline-block;
+            padding: 5px 50px;
+            background-color: #a1a1a1; /* Colored box background color */
+            border: 2px solid #333; /* Border around the box */
+            border-radius: 8px; /* Rounded corners */
+            margin-top: 20px;
+            font-size: 18px; /* Adjust font size as needed */
+            height: 30px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-left: 10%;
+            margin-right: 10%;
+        }
+    </style>
+</head>
+<body>
+    <!-- background-iv -->
+    <nav class="navbar">
+        <h1>Deepfake Detection App</h1>
+    </nav>
+    <div class="container">
+        <h1>Upload The Image</h1>
+        <img id="uploaded-image" src="" alt="Uploaded Image">
+        <input type="file" id="file-input" accept="image/*">
+        <label for="file-input" id="upload-btn">Choose File</label>
+        <div class="result-box">
+            <div id="result">{{ result }}</div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const resultDiv = document.getElementById('result');
+        const uploadedImage = document.getElementById('uploaded-image');
+
+        uploadBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    uploadedImage.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+
+                // Call the Python function to detect deepfake
+                detectDeepfake(file)
+                    .then(result => {
+                        resultDiv.textContent = result;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        resultDiv.textContent = 'An error occurred';
+                    });
+            }
+        });
+
+        async function detectDeepfake(file) {
+            // Send the file to the Python backend for processing
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/detect', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const result = await response.text();
+            return result;
+        }
+    </script>
+</body>
+</html>
+
+
